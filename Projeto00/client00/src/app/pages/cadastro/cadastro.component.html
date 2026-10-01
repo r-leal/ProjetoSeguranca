@@ -1,0 +1,38 @@
+<div class="cadastro-container">
+  <h1>Criar usuário</h1>
+
+  <form (ngSubmit)="cadastrar()">
+    <label>
+      Nome
+      <input type="text" name="nome" [(ngModel)]="usuario.nome" />
+    </label>
+
+    <label>
+      Sobrenome
+      <input type="text" name="sobrenome" [(ngModel)]="usuario.sobrenome" />
+    </label>
+
+    <label>
+      Data de nascimento (opcional)
+      <input type="date" name="data_nascimento" [(ngModel)]="usuario.data_nascimento" />
+    </label>
+
+    <label>
+      Email
+      <input type="text" name="email" [(ngModel)]="usuario.email" />
+    </label>
+
+    <label>
+      Senha
+      <input type="password" name="senha" [(ngModel)]="usuario.senha" />
+    </label>
+
+    <p class="erro" *ngIf="erro">{{ erro }}</p>
+
+    <button type="submit">Criar usuário</button>
+  </form>
+
+  <p>
+    Já tem conta? <a routerLink="/login">Entrar</a>
+  </p>
+</div>
