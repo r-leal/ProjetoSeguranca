@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { TaskService } from '../../core/services/task.service';
 import { AuthService } from '../../core/services/auth.service';
 import { EstadoTarefa, Tarefa } from '../../core/models/tarefa';
@@ -27,8 +28,16 @@ export class KanbanComponent implements OnInit {
   constructor(
     private taskService: TaskService,
     private authService: AuthService,
-    private router: Router
+    private router: Router,
+    private sanitizer: DomSanitizer
   ) {}
+
+  // VULNERABILIDADE PROPOSITAL (Projeto00 — XSS armazenado):
+  // bypassSecurityTrustHtml desliga o sanitizador do Angular para a descrição
+  // da tarefa, que é entrada do usuário não validada. Ver Documentação/Projeto00/Vulnerabilidades.md.
+  descricaoHtml(tarefa: Tarefa): SafeHtml {
+    return this.sanitizer.bypassSecurityTrustHtml(tarefa.descricao);
+  }
 
   ngOnInit(): void {
     const usuario = this.authService.usuarioLogado();

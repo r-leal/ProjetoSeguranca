@@ -4,25 +4,32 @@
 
 Toda documentação extensa sobre os projetos (visão/objetivo, modelo de dados, decisões
 técnicas, vulnerabilidades propositais, evolução de segurança etc.) deve ser registrada
-dentro do vault do Obsidian em `Vault/`, na raiz do repositório — nunca em arquivos `.md`
-soltos dentro da pasta de cada projeto. READMEs curtos de instruções de execução
-(`ProjetoNN/README.md`) continuam ok, mas não substituem a documentação do Vault.
+dentro do vault do Obsidian em `Documentação/`, na raiz do repositório — nunca em
+arquivos `.md` soltos dentro da pasta de cada projeto. READMEs curtos de instruções de
+execução (`ProjetoNN/README.md`) continuam ok, mas não substituem a documentação do
+vault.
 
-### Estrutura obrigatória
+Além da documentação por projeto, o vault também pode ter subdiretórios de referência
+transversal, não ligados a um projeto específico (ex.: `Documentação/OWASP Top 10/`).
+Esses seguem o mesmo princípio de um arquivo por tema, mas sem a exigência de nome igual
+a uma pasta de projeto.
 
-- Um subdiretório por projeto dentro de `Vault/`, nomeado **exatamente igual** à pasta do
+### Estrutura obrigatória (documentação por projeto)
+
+- Um subdiretório por projeto dentro de `Documentação/`, nomeado **exatamente igual** à
+  pasta do
   projeto no repositório (sem espaços, mesma capitalização). Ex.: para `Projeto00/` →
-  `Vault/Projeto00/`.
+  `Documentação/Projeto00/`.
 - Dentro da subpasta do projeto, usar um arquivo por tema conforme o conteúdo crescer:
   - `Visao.md` — objetivo, descrição funcional, telas, modelo de dados.
   - `Vulnerabilidades.md` — vulnerabilidades propositais/encontradas e como explorá-las.
   - `Decisoes.md` — decisões técnicas e trade-offs.
   - Outros arquivos temáticos conforme necessário.
 - Enquanto o conteúdo for pequeno, é aceitável um único arquivo
-  `Vault/ProjetoNN/ProjetoNN.md` cobrindo tudo; dividir em arquivos temáticos quando
-  crescer.
+  `Documentação/ProjetoNN/ProjetoNN.md` cobrindo tudo; dividir em arquivos temáticos
+  quando crescer.
 - Antes de criar documentação nova, verificar se a subpasta do projeto já existe em
-  `Vault/` e reaproveitar os arquivos existentes em vez de criar duplicados.
+  `Documentação/` e reaproveitar os arquivos existentes em vez de criar duplicados.
 
 ### Identificação inequívoca do projeto
 

@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "Projeto 00.md",
+                "file": "Projeto00/Ataque-A05-StoredXSS.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "Projeto 00"
+              "title": "Ataque-A05-StoredXSS"
             }
           }
         ]
@@ -188,6 +188,27 @@
       "bases:Criar nova base": false
     }
   },
-  "active": "4b4f87d0f6709c37",
-  "lastOpenFiles": []
+  "active": "12cde49a3bcf7666",
+  "lastOpenFiles": [
+    "OWASP Top 10/OWASP Top 10.md",
+    "Projeto00/Frontend.md.tmp.2996.e2b3ee79eeeb",
+    "Projeto00/Frontend.md.tmp.2996.f5c2dd3a3281",
+    "Projeto00/Vulnerabilidades.md.tmp.2996.e95cb10508c1",
+    "Projeto00/Vulnerabilidades.md.tmp.2996.e665f7e45880",
+    "Projeto00/Ataque-A05-StoredXSS.md.tmp.2996.69db8db4a926",
+    "Projeto00/Ataque-A05-StoredXSS.md",
+    "Projeto00/Ataque-A05-StoredXSS.md.tmp.2996.ec9bbb1cf942",
+    "Projeto00/Ataque-A01-BrokenAccessControl.md",
+    "Projeto00/Vulnerabilidades.md",
+    "Projeto00/Visao.md",
+    "Projeto00/Frontend.md",
+    "Projeto00/Estrutura.md",
+    "Projeto00/Backend.md",
+    "Projeto00/Ataque-A04-CryptographicFailures.md",
+    "Projeto00/Ataque-A04-CryptographicFailures.md.tmp.8068.ae9fdb8db821",
+    "Projeto00/Ataque-A02-CryptographicFailures.md",
+    "Projeto00/Ataque-A01-BrokenAccessControl.md.tmp.8068.a12387fbf693",
+    "Projeto00/Vulnerabilidades.md.tmp.8068.d4c7b1c516b6",
+    "OWASP Top 10/OWASP Top 10.md.tmp.8068.47f8e65e2300"
+  ]
 }

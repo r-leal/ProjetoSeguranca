@@ -109,6 +109,12 @@ client00/src/
   três colunas do Kanban.
 - Ações: `criarTarefa()` (`POST`), `moverTarefa()` (muda `estado` e salva via `PUT`),
   `removerTarefa()` (`DELETE`), `sair()` (logout + redireciona para `/login`).
+- **Vulnerabilidade proposital**: a descrição da tarefa é renderizada via
+  `[innerHTML]="descricaoHtml(tarefa)"`, e `descricaoHtml()` usa
+  `DomSanitizer.bypassSecurityTrustHtml()` — desligando o sanitizador padrão do Angular.
+  Isso abre um XSS armazenado via campo `descricao`. Ver
+  [[Projeto00/Vulnerabilidades]] (item 10) e o passo a passo em
+  [[Projeto00/Ataque-A05-StoredXSS]].
 
 ### `SobreComponent`
 - Sem estado nem lógica — apenas template estático institucional.
@@ -136,7 +142,8 @@ execução.
   de volta com `JSON.parse` (`usuarioLogado()`).
 - Não há expiração, criptografia, nem flag `httpOnly` (que nem existiria para
   `localStorage` — é sempre acessível via JavaScript). Qualquer script executado na
-  página (ex.: um XSS, já que o backend não sanitiza entradas) consegue ler essa chave.
+  página (ex.: o XSS armazenado do `KanbanComponent`, ver acima) consegue ler essa
+  chave.
 - `logout()` apenas remove a chave (`localStorage.removeItem('usuario_logado')`).
 - Esse é o único mecanismo de "sessão" do app — não existe cookie de sessão do Django
   nem JWT.
