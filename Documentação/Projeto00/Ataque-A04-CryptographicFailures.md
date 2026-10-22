@@ -225,12 +225,12 @@ Em vez de hash genérico (MD5/SHA-*), o padrão atual é uma **função de hash 
 ("password hashing function"), que é deliberadamente lenta e cara de calcular, com salt
 único embutido automaticamente:
 
-| Algoritmo | Observação |
-|---|---|
+| Algoritmo                             | Observação                                                                                                                                                                                                                                    |
+| ------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Argon2** (especificamente Argon2id) | Vencedor da Password Hashing Competition (2015); hoje a recomendação nº 1 da OWASP. É *memory-hard* — exige muita memória RAM para calcular, o que encarece drasticamente atacar em paralelo com GPU/ASIC (que têm pouca memória por núcleo). |
-| **bcrypt** | Mais antigo (1999) e ainda amplamente usado e confiável; tem um "cost factor" configurável que aumenta o tempo de cálculo conforme hardware fica mais rápido. |
-| **scrypt** | Também memory-hard, alternativa ao Argon2, comum em contextos de criptomoedas além de senhas. |
-| **PBKDF2** | Mais simples (aplica um hash tipo SHA-256 repetidas vezes, com salt); aceito por padrões como NIST, mas não é memory-hard — considerado o mais fraco dos quatro listados aqui, ainda assim muito melhor que MD5/SHA-* puro. |
+| **bcrypt**                            | Mais antigo (1999) e ainda amplamente usado e confiável; tem um "cost factor" configurável que aumenta o tempo de cálculo conforme hardware fica mais rápido.                                                                                 |
+| **scrypt**                            | Também memory-hard, alternativa ao Argon2, comum em contextos de criptomoedas além de senhas.                                                                                                                                                 |
+| **PBKDF2**                            | Mais simples (aplica um hash tipo SHA-256 repetidas vezes, com salt); aceito por padrões como NIST, mas não é memory-hard — considerado o mais fraco dos quatro listados aqui, ainda assim muito melhor que MD5/SHA-* puro.                   |
 
 Todos compartilham as mesmas ideias-chave:
 1. **Salt único e aleatório por senha**, gerado automaticamente e guardado junto do

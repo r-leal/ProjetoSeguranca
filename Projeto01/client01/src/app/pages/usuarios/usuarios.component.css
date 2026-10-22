@@ -1,0 +1,25 @@
+.usuarios-page {
+  padding: 1.5rem;
+}
+
+.filtro-usuarios {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.tabela-usuarios {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.tabela-usuarios th,
+.tabela-usuarios td {
+  text-align: left;
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid #ddd;
+}
+
+.tabela-usuarios th {
+  background: #f4f4f4;
+}

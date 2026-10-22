@@ -1,0 +1,43 @@
+<div class="kanban-page">
+  <header class="kanban-header">
+    <h1>Quadro Kanban</h1>
+    <div class="usuario-info">
+      <span>Olá, {{ usuarioNome }}</span>
+      <button type="button" (click)="sair()">Sair</button>
+    </div>
+  </header>
+
+  <form class="filtro-tarefas" (ngSubmit)="filtrarTarefas()">
+    <input type="text" name="filtroNome" placeholder="Filtrar por nome da tarefa" [(ngModel)]="filtroNome" />
+    <button type="submit">Filtrar</button>
+    <button type="button" (click)="limparFiltro()">Limpar</button>
+  </form>
+
+  <form class="nova-tarefa" (ngSubmit)="criarTarefa()">
+    <input type="text" name="nome" placeholder="Nome da tarefa" [(ngModel)]="novaTarefa.nome" />
+    <input type="text" name="descricao" placeholder="Descrição" [(ngModel)]="novaTarefa.descricao" />
+    <input type="date" name="data_prazo" [(ngModel)]="novaTarefa.data_prazo" />
+    <button type="submit">Adicionar tarefa</button>
+  </form>
+
+  <div class="colunas">
+    <section class="coluna" *ngFor="let estado of estados">
+      <h2>{{ estado.titulo }}</h2>
+
+      <article class="cartao" *ngFor="let tarefa of tarefasPorEstado(estado.chave)">
+        <h3>{{ tarefa.nome }}</h3>
+        <p [innerHTML]="descricaoHtml(tarefa)"></p>
+        <p class="prazo">Prazo: {{ tarefa.data_prazo }}</p>
+
+        <div class="acoes">
+          <select [ngModel]="tarefa.estado" (ngModelChange)="moverTarefa(tarefa, $event)" name="estado-{{ tarefa.id }}">
+            <option value="esperando">Esperando</option>
+            <option value="em_andamento">Em andamento</option>
+            <option value="concluido">Concluído</option>
+          </select>
+          <button type="button" (click)="removerTarefa(tarefa)">Remover</button>
+        </div>
+      </article>
+    </section>
+  </div>
+</div>

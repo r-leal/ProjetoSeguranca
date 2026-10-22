@@ -1,0 +1,15 @@
+.app-nav {
+  display: flex;
+  gap: 1rem;
+  padding: 1rem;
+  background: #222;
+}
+
+.app-nav a {
+  color: #fff;
+  text-decoration: none;
+}
+
+.app-nav a:hover {
+  text-decoration: underline;
+}
