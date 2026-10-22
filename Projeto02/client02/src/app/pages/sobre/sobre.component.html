@@ -1,0 +1,24 @@
+<div class="sobre-container">
+  <h1>Sobre o Projeto 02</h1>
+  <p>
+    Este é o terceiro nível do laboratório de estudos de cibersegurança, evoluindo a partir do
+    Projeto01. As falhas de autenticação e autorização documentadas ali foram corrigidas aqui, com
+    base no guia didático em Documentação/Projeto02/SegurancaAutorizacaoAcesso.md.
+  </p>
+  <p>
+    Senhas agora usam hash PBKDF2 com salt (via django.contrib.auth.hashers), o access token (JWT)
+    expira em poucos minutos e é guardado só em memória no frontend, a sessão é renovada por um
+    refresh token opaco, revogável e rotacionado a cada uso, persistido num cookie HttpOnly +
+    SameSite (nunca em localStorage), e a aba "Usuários" é alimentada por uma rota que exige
+    papel "admin" também no backend, não só na interface.
+  </p>
+  <p>
+    O filtro de busca do Kanban continua vulnerável a SQL Injection — essa falha é propositalmente
+    independente do tema de autenticação/autorização deste projeto e permanece documentada em
+    Documentação/Projeto01/Vulnerabilidades.md.
+  </p>
+  <p>
+    <strong>Aviso:</strong> este projeto tem fins exclusivamente educacionais e não deve ser usado
+    como referência de implementação em produção.
+  </p>
+</div>

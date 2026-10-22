@@ -1,0 +1,30 @@
+<div class="usuarios-page">
+  <h1>Usuários</h1>
+
+  <form class="filtro-usuarios" (ngSubmit)="filtrar()">
+    <input type="text" name="filtro" placeholder="Filtrar por nome, sobrenome ou email" [(ngModel)]="filtro" />
+    <button type="submit">Filtrar</button>
+    <button type="button" (click)="limparFiltro()">Limpar</button>
+  </form>
+
+  <table class="tabela-usuarios">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Nome</th>
+        <th>Sobrenome</th>
+        <th>Email</th>
+        <th>Papel</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let usuario of usuarios">
+        <td>{{ usuario.id }}</td>
+        <td>{{ usuario.nome }}</td>
+        <td>{{ usuario.sobrenome }}</td>
+        <td>{{ usuario.email }}</td>
+        <td>{{ usuario.papel }}</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
