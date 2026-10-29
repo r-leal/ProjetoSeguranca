@@ -3,7 +3,6 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { TaskService } from '../../core/services/task.service';
 import { AuthService } from '../../core/services/auth.service';
 import { EstadoTarefa, Tarefa } from '../../core/models/tarefa';
@@ -33,34 +32,22 @@ export class KanbanComponent implements OnInit {
   constructor(
     private taskService: TaskService,
     private authService: AuthService,
-    private router: Router,
-    private sanitizer: DomSanitizer
+    private router: Router
   ) {}
 
-  // VULNERABILIDADE PROPOSITAL (Projeto00 — XSS armazenado):
-  // bypassSecurityTrustHtml desliga o sanitizador do Angular para a descrição
-  // da tarefa, que é entrada do usuário não validada. Ver Documentação/Projeto00/Vulnerabilidades.md.
-  descricaoHtml(tarefa: Tarefa): SafeHtml {
-    return this.sanitizer.bypassSecurityTrustHtml(tarefa.descricao);
-  }
-
   ngOnInit(): void {
-    // O id vem do payload decodificado do JWT só para montar a URL de
-    // /tarefas — não é uma fonte confiável de autorização por si só (ver
-    // comentário em AuthService.usuarioLogado()); quem de fato garante que
-    // só o dono vê suas tarefas é a checagem feita no backend. O nome
-    // exibido, porém, vem de buscarUsuarioLogado(), que é validado pelo
-    // backend via jwt_required (GET /api/usuarios/me).
-    const usuarioToken = this.authService.usuarioLogado();
-    if (!usuarioToken || !usuarioToken.id) {
+    // usuarioLogado() já vem validado pelo backend (login, refresh de
+    // sessão ou GET /api/usuarios/me) — diferente da versão anterior, não é
+    // mais um payload de JWT decodificado sem checagem no cliente, porque o
+    // access token não é mais legível por JavaScript. Mesmo assim, quem de
+    // fato garante que só o dono vê/edita suas tarefas é a checagem feita
+    // no backend, nunca este id usado só para montar a URL de /tarefas.
+    const usuario = this.authService.usuarioLogado();
+    if (!usuario || !usuario.id) {
       return;
     }
-    this.usuarioId = usuarioToken.id;
-
-    this.authService.buscarUsuarioLogado().subscribe({
-      next: (usuario) => (this.usuarioNome = usuario.nome),
-      error: (erro) => this.tratarErroAutenticacao(erro)
-    });
+    this.usuarioId = usuario.id;
+    this.usuarioNome = usuario.nome;
 
     this.carregarTarefas();
   }
@@ -73,10 +60,6 @@ export class KanbanComponent implements OnInit {
     });
   }
 
-  // VULNERABILIDADE PROPOSITAL (Projeto01 — SQL Injection): este filtro
-  // envia o termo digitado direto para o backend, que o concatena numa query
-  // SQL sem parametrização. Ex.: pesquisar por "x' OR '1'='1' -- " retorna as
-  // tarefas de todos os usuários. Ver Documentação/Projeto01/Vulnerabilidades.md.
   filtrarTarefas(): void {
     if (!this.usuarioId) return;
 

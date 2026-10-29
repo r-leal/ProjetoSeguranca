@@ -48,6 +48,25 @@ def _limpar_cookie_refresh(resposta):
     resposta.delete_cookie(settings.REFRESH_COOKIE_NAME, path='/api')
 
 
+def _definir_cookie_access(resposta, token):
+    # Mesma lógica do refresh token, mas com vida curta (ACCESS_TOKEN_TTL_SEGUNDOS):
+    # o frontend nunca lê nem manuseia esse token diretamente, só o
+    # navegador, que o reenvia automaticamente em toda requisição para /api.
+    resposta.set_cookie(
+        settings.ACCESS_COOKIE_NAME,
+        token,
+        max_age=settings.ACCESS_TOKEN_TTL_SEGUNDOS,
+        httponly=True,
+        secure=settings.REFRESH_COOKIE_SECURE,
+        samesite=settings.REFRESH_COOKIE_SAMESITE,
+        path='/api',
+    )
+
+
+def _limpar_cookie_access(resposta):
+    resposta.delete_cookie(settings.ACCESS_COOKIE_NAME, path='/api')
+
+
 @csrf_exempt
 @require_http_methods(['GET', 'POST'])
 def usuarios_collection(request):
@@ -112,16 +131,19 @@ def login(request):
     if usuario is None or not check_password(senha, usuario.senha):
         return JsonResponse({'erro': 'Email ou senha inválidos.'}, status=401)
 
-    # Access token de vida curta (claim "exp", checada em toda requisição
-    # por verificar_token) + refresh token de vida mais longa, persistido no
-    # backend e entregue só via cookie HttpOnly — nunca no corpo da
-    # resposta. Ver Documentação/Projeto02/SegurancaAutorizacaoAcesso.md
-    # (seções 4, 5 e 7); contraste com a falha original em
+    # Access token de vida curta (claim "exp", checada em toda requisição por
+    # verificar_token) e refresh token de vida mais longa — os dois agora só
+    # entregues via cookie HttpOnly, nunca no corpo da resposta: nem um
+    # script injetado por XSS nem a própria aba de rede do navegador expõem
+    # o token a JavaScript. Ver
+    # Documentação/Projeto02/SegurancaAutorizacaoAcesso.md (seções 4, 5 e 7);
+    # contraste com a falha original em
     # Documentação/Projeto01/Ataque-A07-TokenSemExpiracao.md.
     token = gerar_token(usuario)
     refresh_bruto, refresh_expira_em = gerar_refresh_token(usuario)
 
-    resposta = JsonResponse({'token': token})
+    resposta = JsonResponse(usuario_para_json(usuario))
+    _definir_cookie_access(resposta, token)
     _definir_cookie_refresh(resposta, refresh_bruto, refresh_expira_em)
     return resposta
 
@@ -149,7 +171,8 @@ def token_refresh(request):
         return resposta
 
     token = gerar_token(usuario)
-    resposta = JsonResponse({'token': token})
+    resposta = JsonResponse(usuario_para_json(usuario))
+    _definir_cookie_access(resposta, token)
     _definir_cookie_refresh(resposta, novo_refresh_bruto, nova_expiracao)
     return resposta
 
@@ -167,10 +190,10 @@ def logout(request):
 
     resposta = JsonResponse({})
     _limpar_cookie_refresh(resposta)
+    _limpar_cookie_access(resposta)
     return resposta
 
 
-@csrf_exempt
 @require_http_methods(['GET'])
 @jwt_required
 def usuario_logado(request):

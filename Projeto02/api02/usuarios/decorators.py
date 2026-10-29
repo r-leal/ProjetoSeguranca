@@ -1,14 +1,22 @@
 import json
 from functools import wraps
 
+from django.conf import settings
 from django.http import JsonResponse
 
 from .jwt_utils import verificar_token
 
 
 def jwt_required(view_func):
-    """Exige um JWT válido no header Authorization e anexa o payload
-    decodificado em ``request.usuario``.
+    """Exige um JWT válido no cookie HttpOnly de access token (enviado
+    automaticamente pelo navegador) e anexa o payload decodificado em
+    ``request.usuario``.
+
+    O access token não passa mais pelo corpo da resposta nem é lido por
+    JavaScript no frontend — fica só no cookie, fora do alcance de um XSS
+    que tente roubá-lo via ``document.cookie`` ou interceptando a resposta
+    de rede. Ver Documentação/Projeto02/SegurancaAutorizacaoAcesso.md
+    (seção 7).
 
     Usado nas rotas de tarefas para corrigir o IDOR do Projeto00: a
     identidade de quem faz a requisição passa a vir do token assinado, não
@@ -17,11 +25,10 @@ def jwt_required(view_func):
 
     @wraps(view_func)
     def wrapper(request, *args, **kwargs):
-        auth_header = request.headers.get('Authorization', '')
-        if not auth_header.startswith('Bearer '):
+        token = request.COOKIES.get(settings.ACCESS_COOKIE_NAME)
+        if not token:
             return JsonResponse({'erro': 'Token de autenticação ausente.'}, status=401)
 
-        token = auth_header[len('Bearer '):].strip()
         try:
             request.usuario = verificar_token(token)
         except (ValueError, json.JSONDecodeError):

@@ -5,15 +5,15 @@ import { API_BASE_URL } from '../api.config';
 import { AuthService } from '../services/auth.service';
 
 /**
- * Anexa o access token (guardado em memória pelo AuthService) como
- * `Authorization: Bearer <token>` em toda requisição à API, e liga
- * `withCredentials` para que o browser envie (e aceite) o cookie HttpOnly
- * do refresh token e o cookie de CSRF entre localhost:4200 e
- * localhost:8000 — sem isso, cookies simplesmente não são enviados em
- * requisições cross-origin.
+ * Liga `withCredentials` em toda requisição à API para que o browser envie
+ * (e aceite) os cookies HttpOnly de access/refresh token e o cookie de
+ * CSRF entre localhost:4200 e localhost:8000 — sem isso, cookies
+ * simplesmente não são enviados em requisições cross-origin. Diferente da
+ * versão anterior, não há mais token em memória para anexar manualmente:
+ * o access token vive só no cookie HttpOnly, fora do alcance do JS.
  *
- * Se a API responder 401 (access token expirado), tenta renovar via
- * refresh token e refaz a requisição original uma única vez — é esse
+ * Se a API responder 401 (access token expirado/ausente), tenta renovar
+ * via refresh token e refaz a requisição original uma única vez — é esse
  * fluxo que evita deslogar o usuário a cada 15 minutos (vida curta do
  * access token) sem abrir mão de expiração curta.
  *
@@ -26,11 +26,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
     return next(req);
   }
 
-  const anexarToken = (token: string | null) =>
-    req.clone({
-      withCredentials: true,
-      setHeaders: token ? { Authorization: `Bearer ${token}` } : {}
-    });
+  const comCredenciais = req.clone({ withCredentials: true });
 
   // Rotas de autenticação não entram no fluxo de retry — tentar renovar o
   // token numa falha de /login ou /token/refresh causaria um loop; e 401
@@ -40,15 +36,13 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
     req.url.endsWith('/token/refresh') ||
     (req.method === 'POST' && req.url.endsWith('/usuarios'));
 
-  return next(anexarToken(authService.getToken())).pipe(
+  return next(comCredenciais).pipe(
     catchError((erro: HttpErrorResponse) => {
       if (erro.status !== 401 || semRetryDeRefresh) {
         return throwError(() => erro);
       }
 
-      return authService
-        .refrescarToken()
-        .pipe(switchMap((novoToken) => next(anexarToken(novoToken))));
+      return authService.refrescarToken().pipe(switchMap(() => next(comCredenciais)));
     })
   );
 };

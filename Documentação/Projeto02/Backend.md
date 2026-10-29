@@ -18,19 +18,22 @@ Requisição HTTP
 api02/urls.py              ← URLconf raiz
      │
      ▼
-CsrfViewMiddleware  (novo)   ← só rejeita requisições sem X-XSRF-TOKEN nas rotas que
-     │                         dependem de cookie (/token/refresh, /logout)
+CsrfViewMiddleware  (novo)   ← rejeita requisições sem X-XSRF-TOKEN em toda rota que
+     │                         autentica por cookie (access_token/refresh_token) —
+     │                         login/cadastro continuam isentas, por não lerem cookie
      ▼
 <app>/urls.py                ← URLconf do app
      │
      ▼
-jwt_required                 ← valida assinatura E expiração (exp), anexa request.usuario
+jwt_required                 ← lê o access token do cookie HttpOnly (não mais de um
+     │                         header Authorization), valida assinatura E expiração
+     │                         (exp), anexa request.usuario
      │
      ▼
 papel_required(*papeis)  (novo)  ← valida request.usuario['papel'], usado em /usuarios
      │
      ▼
-<app>/views.py                ← lê request, chama o ORM (ou SQL cru em tarefas, herdado), monta JSON
+<app>/views.py                ← lê request, chama o ORM (sempre parametrizado), monta JSON
      │
      ▼
 <app>/models.py                ← Usuario (senha PBKDF2), RefreshToken (novo), Tarefa
@@ -48,10 +51,12 @@ Diferenças de arquitetura em relação ao [[Projeto01/Backend|api01]]:
   (`ttl_segundos`, padrão `settings.ACCESS_TOKEN_TTL_SEGUNDOS`); `verificar_token()`
   rejeita token sem `exp` ou expirado, além de continuar validando a assinatura HMAC
   via `hmac.compare_digest`.
-- **`usuarios/decorators.py`**: além do `jwt_required` herdado, ganha
-  `papel_required(*papeis_permitidos)` — exige que `request.usuario['papel']` esteja
-  entre os papéis informados; depende de `jwt_required` já ter rodado antes (empilhados
-  com `jwt_required` por cima).
+- **`usuarios/decorators.py`**: `jwt_required` lê o access token do cookie `access_token`
+  (`settings.ACCESS_COOKIE_NAME`), não mais de um header `Authorization` — o resto do
+  comportamento (validar assinatura + `exp`, anexar `request.usuario`) é o mesmo. Ganha
+  também `papel_required(*papeis_permitidos)` — exige que `request.usuario['papel']`
+  esteja entre os papéis informados; depende de `jwt_required` já ter rodado antes
+  (empilhados com `jwt_required` por cima).
 - **`usuarios/refresh_utils.py`** (novo): `gerar_refresh_token()`,
   `rotacionar_refresh_token()` e `revogar_refresh_token()` — emissão, rotação (com
   detecção de reuso) e revogação de refresh tokens. Nunca manipula o token em texto
@@ -59,10 +64,15 @@ Diferenças de arquitetura em relação ao [[Projeto01/Backend|api01]]:
 - CORS deixa de ser liberado para qualquer origem (`CORS_ALLOWED_ORIGINS` explícito +
   `CORS_ALLOW_CREDENTIALS`), e `CsrfViewMiddleware` passa a existir no `MIDDLEWARE` —
   ambos herdados *sem alteração* do [[Projeto01]] até aqui, agora corrigidos/adicionados
-  (ver [[Projeto02/Melhorias]]).
-- `listar_tarefas_por_usuario` continua com o mesmo caminho de SQL cru por f-string no
-  filtro por nome — **sem alteração**, herdado do [[Projeto01/Backend|api01]]
-  (⚠️ [[Projeto01/Vulnerabilidades]] item 4).
+  (ver [[Projeto02/Melhorias]]). Como o access token também passou a ser cookie (ver
+  seção "JWT (access token)", abaixo), o `CsrfViewMiddleware` passa a proteger toda rota
+  `jwt_required` — tarefas, `/usuarios/me`, `listar_usuarios` — não só `/token/refresh` e
+  `/logout`.
+- `listar_tarefas_por_usuario` trocou o SQL cru por f-string por
+  `Tarefa.objects.filter(usuario_id=usuario_id, nome__icontains=nome_filtro)` — o ORM do
+  Django parametriza o valor de `filter()`, fechando a SQL Injection herdada do
+  [[Projeto01/Backend|api01]] (ver [[Projeto02/Melhorias]]; a falha original está
+  documentada em [[Projeto01/Vulnerabilidades]] item 4).
 
 ## Organização de pastas
 
@@ -203,6 +213,14 @@ def gerar_token(usuario, ttl_segundos=None) -> str:
   desenvolvimento continua hardcoded no código, então o mesmo risco do item 7 de
   [[Projeto00/Vulnerabilidades]] (segredo commitado) ainda se aplica a ele se o projeto
   for exposto sem sobrescrever a variável de ambiente.
+- **Entrega**: o token gerado por `gerar_token()` nunca aparece no corpo de nenhuma
+  resposta JSON — `usuarios/views.py:_definir_cookie_access` o coloca num cookie
+  `HttpOnly` (`ACCESS_COOKIE_NAME = 'access_token'`, `Path=/api`, `SameSite=Lax`,
+  `Secure` quando `DEBUG=False`, `max_age=ACCESS_TOKEN_TTL_SEGUNDOS`), setado em `login`
+  e `token_refresh`. `jwt_required` o lê de volta de `request.COOKIES`, nunca de um
+  header. Nem um script injetado por XSS nem a aba de rede do navegador conseguem obter
+  o valor do token — só o conteúdo *decodificado* (sem assinatura) seria visível a
+  quem tivesse o cookie em mãos, mas o cookie em si está fora do alcance de JavaScript.
 
 ## Refresh token
 
@@ -235,34 +253,41 @@ urlpatterns = [
 
 | Método | Rota | View | Autenticação | CSRF | Input (body JSON) | Output |
 |---|---|---|---|---|---|---|
-| `GET`/`POST` | `/api/usuarios` | `usuarios_collection` → `listar_usuarios` / `cadastrar_usuario` | `GET`: `jwt_required` **+ `papel_required(PAPEL_ADMIN)`**; `POST`: nenhuma (pública) | isenta (`@csrf_exempt`) | `POST`: `{ nome, sobrenome, data_nascimento?, email, senha }`; `GET`: `?q=<termo>` opcional | `POST`: `201` + `Usuario`; `GET`: `200` + lista **ou** `403` se papel ≠ admin |
-| `POST` | `/api/login` | `login` | nenhuma (pública) | isenta, mas seta cookie CSRF (`@ensure_csrf_cookie`) | `{ email, senha }` | `200` + `{ token }` + `Set-Cookie: refresh_token` **ou** `401` |
-| `POST` | `/api/logout` | `logout` (novo) | `jwt_required` | protegida (exige `X-XSRF-TOKEN`) | — | `200` + `{}`, revoga e limpa o cookie `refresh_token` |
-| `POST` | `/api/token/refresh` | `token_refresh` (novo) | cookie `refresh_token` | protegida | — | `200` + `{ token }` + novo `Set-Cookie: refresh_token` **ou** `401` |
-| `GET` | `/api/usuarios/me` | `usuario_logado` | `jwt_required` | isenta | — | `200` + `Usuario` do token **ou** `401` |
+| `GET`/`POST` | `/api/usuarios` | `usuarios_collection` → `listar_usuarios` / `cadastrar_usuario` | `GET`: `jwt_required` **+ `papel_required(PAPEL_ADMIN)`**; `POST`: nenhuma (pública) | `GET`: protegida (cookie); `POST`: isenta (`@csrf_exempt`, não lê cookie) | `POST`: `{ nome, sobrenome, data_nascimento?, email, senha }`; `GET`: `?q=<termo>` opcional | `POST`: `201` + `Usuario`; `GET`: `200` + lista **ou** `403` se papel ≠ admin |
+| `POST` | `/api/login` | `login` | nenhuma (pública) | isenta, mas seta cookie CSRF (`@ensure_csrf_cookie`) | `{ email, senha }` | `200` + `Usuario` + `Set-Cookie: access_token` + `Set-Cookie: refresh_token` **ou** `401` |
+| `POST` | `/api/logout` | `logout` (novo) | `jwt_required` | protegida (exige `X-XSRF-TOKEN`) | — | `200` + `{}`, revoga o refresh token e limpa os cookies `access_token`/`refresh_token` |
+| `POST` | `/api/token/refresh` | `token_refresh` (novo) | cookie `refresh_token` | protegida | — | `200` + `Usuario` + novo `Set-Cookie: access_token` + `Set-Cookie: refresh_token` **ou** `401` |
+| `GET` | `/api/usuarios/me` | `usuario_logado` | `jwt_required` | n/a (método `GET`, CSRF só se aplica a métodos que alteram estado) | — | `200` + `Usuario` do token **ou** `401` |
 
 `cadastrar_usuario` agora grava `senha=make_password(...)` em vez de `hash_md5(...)`.
-`login` compara com `check_password()` e, no sucesso, emite **os dois tokens**: o access
-token no corpo da resposta, o refresh token só no cookie `Set-Cookie: refresh_token=...;
-HttpOnly; Path=/api; SameSite=Lax` (`Secure` quando `DEBUG=False`).
+`login` compara com `check_password()` e, no sucesso, emite **os dois tokens** só via
+cookie `HttpOnly` (`access_token` e `refresh_token`) — o corpo da resposta devolve
+somente os dados do usuário, nunca um token. Ver seção "JWT (access token)", acima, para
+os atributos exatos do cookie de access token, e "Refresh token", abaixo, para o de
+refresh.
 
 ⚠️ `listar_usuarios` corrige a falha do [[Projeto01]] (item 5 de
 [[Projeto01/Vulnerabilidades]]): agora exige `papel_required(Usuario.PAPEL_ADMIN)`, além
 de `jwt_required` — chamar a rota com um token de usuário comum devolve `403`.
 
-### `tarefas` (`tarefas/urls.py`) — idêntico ao [[Projeto01/Backend|api01]]
+### `tarefas` (`tarefas/urls.py`)
 
-| Método | Rota | View | Checagem de posse | Input (body JSON) | Output |
-|---|---|---|---|---|---|
-| `GET` | `/api/usuarios/<usuario_id>/tarefas` | `listar_tarefas_por_usuario` | `usuario_id` da URL == `id` do token, senão `403` | `?nome=` opcional (ver ⚠️) | `200` + lista de `Tarefa` |
-| `POST` | `/api/tarefas` | `criar_tarefa` | `usuario_id` sempre = `id` do token | `{ nome, descricao?, data_prazo?, estado?, url? }` | `201` + `Tarefa` criada (com `url_titulo` resolvido pelo backend) |
-| `PUT` | `/api/tarefas/<tarefa_id>` | `tarefa_detalhe` | `tarefa.usuario_id` == `id` do token, senão `404` | `{ nome?, descricao?, data_prazo?, estado?, url? }` | `200` + `Tarefa` atualizada |
-| `DELETE` | `/api/tarefas/<tarefa_id>` | `tarefa_detalhe` | idem acima | — | `204` sem corpo |
-| `POST` | `/api/tarefas/preview-link` | `preview_link` (novo) | `jwt_required` | `{ url }` | `200` + `{ url, titulo }` **ou** `422` se a URL for inválida/bloqueada (ver "Preview de link", acima) |
+| Método | Rota | View | Checagem de posse | CSRF | Input (body JSON) | Output |
+|---|---|---|---|---|---|---|
+| `GET` | `/api/usuarios/<usuario_id>/tarefas` | `listar_tarefas_por_usuario` | `usuario_id` da URL == `id` do token, senão `403` | n/a (`GET`) | `?nome=` opcional | `200` + lista de `Tarefa` |
+| `POST` | `/api/tarefas` | `criar_tarefa` | `usuario_id` sempre = `id` do token | protegida (exige `X-XSRF-TOKEN`) | `{ nome, descricao?, data_prazo?, estado?, url? }` | `201` + `Tarefa` criada (com `url_titulo` resolvido pelo backend) |
+| `PUT` | `/api/tarefas/<tarefa_id>` | `tarefa_detalhe` | `tarefa.usuario_id` == `id` do token, senão `404` | protegida | `{ nome?, descricao?, data_prazo?, estado?, url? }` | `200` + `Tarefa` atualizada |
+| `DELETE` | `/api/tarefas/<tarefa_id>` | `tarefa_detalhe` | idem acima | protegida | — | `204` sem corpo |
+| `POST` | `/api/tarefas/preview-link` | `preview_link` (novo) | `jwt_required` | protegida | `{ url }` | `200` + `{ url, titulo }` **ou** `422` se a URL for inválida/bloqueada (ver "Preview de link", acima) |
 
-⚠️ `GET /api/usuarios/<usuario_id>/tarefas?nome=<termo>` continua montando a consulta com
-SQL cru e f-string — **sem alteração** em relação ao [[Projeto01/Backend|api01]]. Ver
-[[Projeto01/Vulnerabilidades]] item 4.
+Diferente do [[Projeto01/Backend|api01]] em dois pontos: `GET
+/api/usuarios/<usuario_id>/tarefas?nome=<termo>` não monta mais a consulta com SQL cru —
+usa `Tarefa.objects.filter(nome__icontains=nome_filtro)`, parametrizado pelo ORM (ver
+[[Projeto02/Melhorias]]; a falha original está em [[Projeto01/Vulnerabilidades]] item 4);
+e todas as rotas acima perderam o `@csrf_exempt` que tinham no [[Projeto01]], porque
+`jwt_required` passou a autenticar por cookie (ver seção "Diferenças de arquitetura",
+acima) — métodos que alteram estado (`POST`/`PUT`/`DELETE`) agora exigem
+`X-XSRF-TOKEN`.
 
 ## Bibliotecas (`requirements.txt`)
 
@@ -285,10 +310,13 @@ Em relação ao [[Projeto01/Backend|api01]]:
 - `JWT_SECRET_KEY` — nova, independente do `SECRET_KEY` (lida de
   `os.environ.get('JWT_SECRET_KEY', <fallback dev>)`).
 - `ACCESS_TOKEN_TTL_SEGUNDOS = 900`, `REFRESH_TOKEN_TTL_SEGUNDOS = 604800`,
-  `REFRESH_COOKIE_NAME = 'refresh_token'`.
-- `REFRESH_COOKIE_SECURE = not DEBUG`, `REFRESH_COOKIE_SAMESITE = 'Lax'`.
+  `REFRESH_COOKIE_NAME = 'refresh_token'`, `ACCESS_COOKIE_NAME = 'access_token'`.
+- `REFRESH_COOKIE_SECURE = not DEBUG`, `REFRESH_COOKIE_SAMESITE = 'Lax'` — o cookie de
+  access token reaproveita essas mesmas flags (ver `_definir_cookie_access` em
+  [[Projeto02/Backend]], seção "JWT (access token)").
 - `MIDDLEWARE` ganha `django.middleware.csrf.CsrfViewMiddleware` (ausente desde o
-  [[Projeto00]]).
+  [[Projeto00]]) — protege toda rota que autentica por cookie (`access_token` e/ou
+  `refresh_token`), não só as duas que existiam numa primeira versão deste projeto.
 - `CORS_ALLOWED_ORIGINS = ['http://localhost:4200']` e `CORS_ALLOW_CREDENTIALS = True`
   substituem `CORS_ALLOW_ALL_ORIGINS = True` (herdado sem alteração até o [[Projeto01]]).
 - `CORS_ALLOW_HEADERS` estendido com `'x-xsrf-token'` (fora da lista default do

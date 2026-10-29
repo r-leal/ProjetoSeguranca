@@ -32,7 +32,7 @@
 
       <article class="cartao" *ngFor="let tarefa of tarefasPorEstado(estado.chave)">
         <h3>{{ tarefa.nome }}</h3>
-        <p [innerHTML]="descricaoHtml(tarefa)"></p>
+        <p>{{ tarefa.descricao }}</p>
         <p class="prazo">Prazo: {{ tarefa.data_prazo }}</p>
         <p class="link-referencia" *ngIf="tarefa.url">
           <a [href]="tarefa.url" target="_blank" rel="noopener noreferrer">{{ tarefa.url_titulo || tarefa.url }}</a>

@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "Projeto01/Ataque-A01-ListagemUsuariosSemChecarPapel.md",
+                "file": "Projeto02/Melhorias.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "Ataque-A01-ListagemUsuariosSemChecarPapel"
+              "title": "Melhorias"
             }
           }
         ]
@@ -83,7 +83,7 @@
       }
     ],
     "direction": "horizontal",
-    "width": 317.5026054382324
+    "width": 200
   },
   "right": {
     "id": "4d19fbd3067d6c19",
@@ -190,37 +190,41 @@
   },
   "active": "4b4f87d0f6709c37",
   "lastOpenFiles": [
+    "Projeto02/ProtecaoXSSeCSRF.md",
+    "Projeto02/ProtecaoCORSeSSRF.md",
+    "Projeto02/Vulnerabilidades.md",
+    "Projeto02/Melhorias.md",
+    "Projeto02/Visao.md",
+    "Projeto02/SegurancaAutorizacaoAcesso.md",
+    "Projeto00/Vulnerabilidades.md",
+    "Projeto02/Frontend.md.tmp.7952.577a4ebb4cac",
+    "Projeto02/Backend.md.tmp.7952.429a61ef02d2",
+    "Projeto02/Estrutura.md.tmp.7952.363785c436d2",
+    "Projeto02/Estrutura.md.tmp.7952.e212488094cf",
+    "Projeto02/Visao.md.tmp.7952.3b4ffd45c8d1",
+    "Projeto02/Visao.md.tmp.7952.68f9f14380c1",
+    "Projeto02/Visao.md.tmp.7952.9840cd54aaea",
+    "Projeto02/Visao.md.tmp.7952.4b863aa8aa9a",
+    "Projeto02/Frontend.md.tmp.7952.b4e2b6f1295c",
+    "Projeto02/Frontend.md.tmp.7952.f06f1be52f84",
+    "Projeto02/Frontend.md",
+    "Projeto02/Estrutura.md",
+    "Projeto02/Backend.md",
+    "OWASP Top 10/OWASP Top 10.md",
+    "Projeto01/Ataque-A01-ListagemUsuariosSemChecarPapel.md",
     "Projeto01/Ataque-A04-MD5SemSalt.md",
     "Projeto01/Ataque-A05-SQLInjectionFiltro.md",
     "Projeto01/Ataque-A07-TokenSemExpiracao.md",
     "Projeto01/Melhorias.md",
-    "Projeto01/Ataque-A01-ListagemUsuariosSemChecarPapel.md",
-    "Projeto01/Ataque-A01-ListagemUsuariosSemChecarPapel.md.tmp.12648.07704a2ff9f5",
-    "Projeto01/Frontend.md.tmp.12648.6e405040a74e",
-    "Projeto01/Melhorias.md.tmp.12648.8bf7f5c4da9f",
     "Projeto01/Ataque-A01-EscalonamentoPrivilegio.md",
-    "Projeto01/Ataque-A01-EscalonamentoPrivilegio.md.tmp.12648.1b80982bafe2",
-    "OWASP Top 10/OWASP Top 10.md",
     "Projeto01/Vulnerabilidades.md",
     "Projeto01/Visao.md",
-    "Projeto01/Backend.md.tmp.7512.e055e84fa9a3",
-    "Projeto01/Backend.md.tmp.7512.0d8546ca75bb",
     "Projeto01/Frontend.md",
-    "Projeto01/Ataque-A01-ListagemUsuariosSemChecarPapel.md.tmp.12752.e69ac3a450c9",
-    "Projeto01/Estrutura.md.tmp.12752.091e4b2568ad",
     "Projeto01/Estrutura.md",
-    "Projeto01/Visao.md.tmp.12752.d32d953146bc",
     "Projeto01/Backend.md",
-    "Projeto01/Visao.md.tmp.12752.138028a93de0",
     "Projeto00/Ataque-A04-CryptographicFailures.md",
     "Projeto00/Ataque-A01-BrokenAccessControl.md",
     "Projeto00/Visao.md",
-    "Projeto00/Frontend.md",
-    "Projeto00/Estrutura.md",
-    "Projeto00/Backend.md",
-    "Projeto00/Ataque-A05-StoredXSS.md",
-    "Palestras/Planejamento-4-Semanas.md",
-    "Projeto00/Vulnerabilidades.md",
-    "Projeto00/Ataque-A02-CryptographicFailures.md"
+    "Projeto00/Frontend.md"
   ]
 }

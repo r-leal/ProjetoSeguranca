@@ -45,6 +45,13 @@ ACCESS_TOKEN_TTL_SEGUNDOS = 15 * 60  # 15 minutos
 REFRESH_TOKEN_TTL_SEGUNDOS = 7 * 24 * 60 * 60  # 7 dias
 REFRESH_COOKIE_NAME = 'refresh_token'
 
+# Access token também guardado em cookie HttpOnly (em vez de devolvido no
+# corpo da resposta para o frontend anexar manualmente no header
+# Authorization): fica inacessível a um XSS que tente ler
+# document.cookie/resposta de rede, igual ao refresh token. Ver
+# Documentação/Projeto02/SegurancaAutorizacaoAcesso.md (seção 7).
+ACCESS_COOKIE_NAME = 'access_token'
+
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
@@ -77,12 +84,11 @@ INSTALLED_APPS = [
 ]
 
 # Projeto 01 (inseguro de propósito): sem XFrameOptionsMiddleware (fora do
-# escopo deste projeto). CsrfViewMiddleware foi adicionado no Projeto02: as
-# rotas que dependem do cookie do refresh token (/token/refresh, /logout)
-# precisam dessa proteção — ver Documentação/Projeto02/SegurancaAutorizacaoAcesso.md
-# (seção 7.3). As demais rotas seguem com @csrf_exempt porque autenticam via
-# header Authorization, não por cookie, e CSRF só é um risco quando o
-# browser envia a credencial (cookie) automaticamente.
+# escopo deste projeto). CsrfViewMiddleware foi adicionado no Projeto02: toda
+# rota que autentica via cookie (access_token e/ou refresh_token) precisa
+# dessa proteção — ver Documentação/Projeto02/SegurancaAutorizacaoAcesso.md
+# (seção 7.3). /login e o POST de cadastro continuam @csrf_exempt porque não
+# leem nenhum cookie de autenticação (é ali que a sessão nasce).
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'corsheaders.middleware.CorsMiddleware',

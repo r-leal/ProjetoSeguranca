@@ -22,9 +22,11 @@ export class TaskService {
     return this.http.get<Tarefa[]>(`${API_BASE_URL}/usuarios/${usuarioId}/tarefas`);
   }
 
-  // VULNERABILIDADE PROPOSITAL (Projeto01 — SQL Injection): o termo digitado
-  // na aba de filtro do Kanban é enviado cru para o backend, que o concatena
-  // diretamente numa query SQL. Ver Documentação/Projeto01/Vulnerabilidades.md.
+  // Correção de SQL Injection (era vulnerabilidade proposital do Projeto01):
+  // o termo digitado aqui chega ao backend só como valor de query string; a
+  // view usa Tarefa.objects.filter(nome__icontains=...) do ORM do Django, que
+  // sempre parametriza o valor — nunca mais concatenado numa query SQL crua.
+  // Ver Documentação/Projeto01/Vulnerabilidades.md (para a falha original).
   filtrarPorNome(usuarioId: number, nome: string): Observable<Tarefa[]> {
     const url = `${API_BASE_URL}/usuarios/${usuarioId}/tarefas?nome=${encodeURIComponent(nome)}`;
     return this.http.get<Tarefa[]>(url);

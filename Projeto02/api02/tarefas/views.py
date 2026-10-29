@@ -1,9 +1,7 @@
 import json
 
-from django.db import connection
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
-from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 
 from urllib.parse import urlsplit
@@ -52,7 +50,6 @@ def _resolver_url_titulo(url):
     return preview['url'], preview['titulo']
 
 
-@csrf_exempt
 @require_http_methods(['POST'])
 @jwt_required
 def preview_link(request):
@@ -72,18 +69,6 @@ def preview_link(request):
     return JsonResponse(preview)
 
 
-def _linha_para_json(linha):
-    return {
-        'id': linha[0],
-        'usuario_id': linha[1],
-        'nome': linha[2],
-        'descricao': linha[3],
-        'data_prazo': linha[4],
-        'estado': linha[5],
-    }
-
-
-@csrf_exempt
 @require_http_methods(['GET'])
 @jwt_required
 def listar_tarefas_por_usuario(request, usuario_id):
@@ -94,30 +79,22 @@ def listar_tarefas_por_usuario(request, usuario_id):
     if request.usuario['id'] != usuario_id:
         return JsonResponse({'erro': 'Acesso negado.'}, status=403)
 
+    # Correção de SQL Injection (era vulnerabilidade proposital do Projeto01:
+    # o filtro por nome concatenava o valor digitado direto na query SQL, sem
+    # parametrização — um valor como ' OR '1'='1' -- quebrava a condição de
+    # usuario_id e retornava as tarefas de todos os usuários). O ORM do
+    # Django sempre parametriza os valores de filter()/icontains(), então o
+    # termo digitado nunca é interpretado como SQL, só como dado. Ver
+    # Documentação/Projeto01/Vulnerabilidades.md (para a falha original).
     nome_filtro = request.GET.get('nome')
 
-    if nome_filtro is None:
-        tarefas = Tarefa.objects.filter(usuario_id=usuario_id)
-        return JsonResponse([tarefa_para_json(t) for t in tarefas], safe=False)
+    tarefas = Tarefa.objects.filter(usuario_id=usuario_id)
+    if nome_filtro is not None:
+        tarefas = tarefas.filter(nome__icontains=nome_filtro)
 
-    # VULNERABILIDADE PROPOSITAL (Projeto01 — SQL Injection):
-    # o filtro por nome da aba de busca do Kanban é concatenado diretamente
-    # na consulta SQL, sem parametrização. Um valor como
-    # ' OR '1'='1' -- quebra a condição de usuario_id e retorna as tarefas
-    # de todos os usuários. Ver Documentação/Projeto01/Vulnerabilidades.md.
-    query = (
-        "SELECT id, usuario_id, nome, descricao, data_prazo, estado "
-        "FROM tarefas_tarefa "
-        f"WHERE usuario_id = {usuario_id} AND nome LIKE '%{nome_filtro}%'"
-    )
-    with connection.cursor() as cursor:
-        cursor.execute(query)
-        linhas = cursor.fetchall()
-
-    return JsonResponse([_linha_para_json(linha) for linha in linhas], safe=False)
+    return JsonResponse([tarefa_para_json(t) for t in tarefas], safe=False)
 
 
-@csrf_exempt
 @require_http_methods(['POST'])
 @jwt_required
 def criar_tarefa(request):
@@ -141,7 +118,6 @@ def criar_tarefa(request):
     return JsonResponse(tarefa_para_json(tarefa), status=201)
 
 
-@csrf_exempt
 @require_http_methods(['PUT', 'DELETE'])
 @jwt_required
 def tarefa_detalhe(request, tarefa_id):

@@ -18,12 +18,12 @@
 | Backend | `Projeto02/api02/` | Django 6.1.1 (Python) | API REST que expõe usuários e tarefas, emite/valida JWT + refresh token, persiste em SQLite |
 | Frontend | `Projeto02/client02/` | Angular 18 (TypeScript, standalone components) | SPA consumida no navegador, fala com a API via HTTP |
 
-Comunicação: `client02` → HTTP/JSON (+ cookies) → `api02` em `http://localhost:8000/api`
-(constante `API_BASE_URL`), origem restrita a `http://localhost:4200`
-(`CORS_ALLOWED_ORIGINS`). Diferente do [[Projeto01]], a sessão agora tem duas partes: um
-access token (JWT, vida curta, em memória no frontend) e um refresh token (opaco, vida
-mais longa, cookie `HttpOnly`) — detalhes em [[Projeto02/Backend]] e
-[[Projeto02/Frontend]].
+Comunicação: `client02` → HTTP/JSON (+ cookies) → proxy do dev server (`/api` →
+`http://localhost:8000/api`, `proxy.conf.json`) → `api02`, origem restrita a
+`http://localhost:4200` (`CORS_ALLOWED_ORIGINS`). Diferente do [[Projeto01]], a sessão
+agora tem duas partes, nenhuma delas manuseada pelo frontend: um access token (JWT, vida
+curta) e um refresh token (opaco, vida mais longa), os dois só em cookies `HttpOnly` —
+detalhes em [[Projeto02/Backend]] e [[Projeto02/Frontend]].
 
 ## Fluxo ponta a ponta
 
@@ -32,25 +32,28 @@ client02 (Angular, :4200)
   LoginComponent / CadastroComponent / KanbanComponent / UsuariosComponent
         │  HttpClient (JSON, withCredentials)
         ▼
-  authInterceptor  ──→  anexa "Authorization: Bearer <access token>" (em memória)
-        │               + cookie refresh_token (HttpOnly) e XSRF-TOKEN, automáticos
+  authInterceptor  ──→  só garante withCredentials: true — nenhum token anexado
+        │               cookies access_token/refresh_token (HttpOnly) e XSRF-TOKEN,
+        │               enviados automaticamente pelo browser
         │               em 401 → AuthService.refrescarToken() → retry
-        ▼  http://localhost:8000/api/...
+        ▼  /api/... (mesma origem)
+proxy do dev server (proxy.conf.json)  ──→  http://localhost:8000/api/...
+        ▼
 api02 (Django, :8000)
-  CsrfViewMiddleware  ← protege /token/refresh e /logout (dependem de cookie)
-        │
+  CsrfViewMiddleware  ← protege toda rota que autentica por cookie (tarefas,
+        │                /usuarios/me, listar_usuarios, /token/refresh, /logout)
         ▼
   urls.py (raiz) → usuarios/urls.py | tarefas/urls.py
         │
         ▼
-  jwt_required (valida assinatura + exp) → papel_required (valida papel, em /usuarios)
-        │
+  jwt_required (lê access_token do cookie, valida assinatura + exp)
+        │  → papel_required (valida papel, em /usuarios)
         ▼
-  views.py (usuarios | tarefas) — JSON in/out
+  views.py (usuarios | tarefas) — JSON in/out, nunca um token no corpo
         │
         ▼
   models.py (Usuario com senha PBKDF2, RefreshToken, Tarefa) — Django ORM
-        │
+        │  (filtro de tarefas por nome parametrizado — sem SQL cru)
         ▼
   db.sqlite3 (arquivo local, não versionado)
 ```

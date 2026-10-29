@@ -6,16 +6,19 @@
     base no guia didático em Documentação/Projeto02/SegurancaAutorizacaoAcesso.md.
   </p>
   <p>
-    Senhas agora usam hash PBKDF2 com salt (via django.contrib.auth.hashers), o access token (JWT)
-    expira em poucos minutos e é guardado só em memória no frontend, a sessão é renovada por um
-    refresh token opaco, revogável e rotacionado a cada uso, persistido num cookie HttpOnly +
-    SameSite (nunca em localStorage), e a aba "Usuários" é alimentada por uma rota que exige
-    papel "admin" também no backend, não só na interface.
+    Senhas agora usam hash PBKDF2 com salt (via django.contrib.auth.hashers); o access token (JWT)
+    expira em poucos minutos e, assim como o refresh token (opaco, revogável e rotacionado a cada
+    uso), fica só num cookie HttpOnly + SameSite — nunca em localStorage nem acessível a
+    JavaScript. A proteção CSRF (header X-XSRF-TOKEN) cobre toda rota autenticada por esses
+    cookies, e a aba "Usuários" é alimentada por uma rota que exige papel "admin" também no
+    backend, não só na interface.
   </p>
   <p>
-    O filtro de busca do Kanban continua vulnerável a SQL Injection — essa falha é propositalmente
-    independente do tema de autenticação/autorização deste projeto e permanece documentada em
-    Documentação/Projeto01/Vulnerabilidades.md.
+    O filtro de busca do Kanban já esteve vulnerável a SQL Injection e a descrição das tarefas já
+    esteve vulnerável a XSS armazenado (via bypassSecurityTrustHtml) — ambas falhas propositais do
+    Projeto01/Projeto00, já corrigidas neste projeto (ORM parametrizado e interpolação padrão do
+    Angular, respectivamente). Seguem documentadas em Documentação/Projeto01/Vulnerabilidades.md e
+    Documentação/Projeto00/Vulnerabilidades.md para referência histórica.
   </p>
   <p>
     <strong>Aviso:</strong> este projeto tem fins exclusivamente educacionais e não deve ser usado

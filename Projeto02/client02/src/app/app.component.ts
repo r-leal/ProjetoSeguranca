@@ -15,11 +15,12 @@ export class AppComponent {
 
   constructor(private authService: AuthService) {}
 
-  // Esconder a aba aqui é só UX: a decisão é baseada no papel decodificado
-  // do JWT sem verificar assinatura no cliente, então não é controle de
-  // acesso por si só. Quem garante isso de verdade é o backend — GET
-  // /api/usuarios agora exige @papel_required(Usuario.PAPEL_ADMIN), não só
-  // estar logado. Ver Documentação/Projeto02/SegurancaAutorizacaoAcesso.md
+  // Esconder a aba aqui é só UX: mesmo vindo já validado pelo backend (ver
+  // AuthService.usuarioLogado()), nada impede alguém de reabilitar a aba
+  // via DevTools e tentar chamar a rota de qualquer forma — não é controle
+  // de acesso por si só. Quem garante isso de verdade é o backend — GET
+  // /api/usuarios exige @papel_required(Usuario.PAPEL_ADMIN), não só estar
+  // logado. Ver Documentação/Projeto02/SegurancaAutorizacaoAcesso.md
   // (seção 3); para a falha original (sem checagem nenhuma no backend), ver
   // Documentação/Projeto01/Vulnerabilidades.md.
   get mostrarAbaUsuarios(): boolean {
